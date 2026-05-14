@@ -886,7 +886,7 @@ async function sendCustomerWelcomeEmail(email) {
     
     const templateParams = {
         to_email: email,
-        customer_name: email.split('@')[0], // Use email prefix as name
+        customer_name: email.split('@')[0],
         customer_email: email,
         discount_code: 'LALIVE15',
         company_name: 'LA Live Stream',
@@ -894,13 +894,15 @@ async function sendCustomerWelcomeEmail(email) {
         website_url: 'www.lalivestream.com'
     };
     
+    console.log('Sending customer email with params:', templateParams);
+    
     const response = await emailjs.send(
         EMAILJS_CONFIG.serviceId, 
         EMAILJS_CONFIG.customerTemplate, 
         templateParams
     );
     
-    console.log('Customer email sent:', response);
+    console.log('Customer email sent successfully:', response);
     return response;
 }
 
@@ -917,13 +919,15 @@ async function sendAdminNotification(email) {
         website_url: window.location.host
     };
     
+    console.log('Sending admin notification with params:', templateParams);
+    
     const response = await emailjs.send(
         EMAILJS_CONFIG.serviceId, 
         EMAILJS_CONFIG.adminTemplate, 
         templateParams
     );
     
-    console.log('Admin notification sent:', response);
+    console.log('Admin notification sent successfully:', response);
     return response;
 }
 
