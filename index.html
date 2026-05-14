@@ -765,12 +765,17 @@
         </div>
         
         <div id="successMessage" class="success-message">
-            <div class="success-emoji">🎬</div>
-            <h3 class="success-title">Welcome Aboard!</h3>
-            <p class="success-text">Check your email for your exclusive 15% discount code.<br>We'll be in touch with premium offers soon!</p>
+            <div class="success-emoji">✅</div>
+            <h3 class="success-title">תודה על הרישום!</h3>
+            <p class="success-text">המייל שלך נשמר בהצלחה.<br>נהיה בקשר בקרוב עם הצעות מיוחדות!</p>
         </div>
     </div>
 </div>
+
+<!-- Hidden form for Netlify -->
+<form name="email-signup" netlify netlify-honeypot="bot-field" hidden>
+    <input type="text" name="email" />
+</form>
 
 <script>
 let emailPopupShown = false;
@@ -804,15 +809,15 @@ function handleEmailSubmit(event) {
         return;
     }
     
+    // Save to admin dashboard
+    saveToAdminDashboard(email);
+    
     // Send to Netlify Forms
     fetch('/', {
         method: 'POST',
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(new FormData(form)).toString()
     }).catch(() => {});
-    
-    // Send notification email
-    sendNotificationToOwner(email);
     
     // Show success message
     formDiv.style.display = 'none';
@@ -823,55 +828,23 @@ function handleEmailSubmit(event) {
     }, 4000);
 }
 
-function sendNotificationToOwner(subscriberEmail) {
-    const timestamp = new Date().toLocaleString();
-    const currentPage = window.location.href;
+function saveToAdminDashboard(email) {
+    const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
     
-    console.log('New LA Live Stream subscriber:', subscriberEmail, 'at', timestamp);
-    
-    // Send email notification to business inbox
-    const subject = encodeURIComponent('🎯 New Email Signup - LA Live Stream');
-    const body = encodeURIComponent(`דרך האתר נרשם מייל חדש!\n\n📧 מייל: ${subscriberEmail}\n⏰ זמן: ${timestamp}\n🌐 דף: ${currentPage}\n\n---\nLA Live Stream Email Signup`);
-    
-    // Open default mail app with notification
-    window.open(`mailto:elad@lalivestream.com?subject=${subject}&body=${body}`, '_blank');
-    
-    // Also try to send via hidden form (backup method)
-    try {
-        const hiddenForm = document.createElement('form');
-        hiddenForm.method = 'POST';
-        hiddenForm.action = '/';
-        hiddenForm.setAttribute('data-netlify', 'true');
-        hiddenForm.style.display = 'none';
+    // Check if email already exists
+    if (!subscribers.find(s => s.email === email)) {
+        const newSubscriber = {
+            email: email,
+            timestamp: new Date().toLocaleString(),
+            source: 'Popup',
+            id: Date.now()
+        };
         
-        const nameField = document.createElement('input');
-        nameField.type = 'hidden';
-        nameField.name = 'form-name';
-        nameField.value = 'owner-notification';
+        subscribers.unshift(newSubscriber); // Add to beginning
+        localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
         
-        const emailField = document.createElement('input');
-        emailField.type = 'hidden';
-        emailField.name = 'subscriber-email';
-        emailField.value = subscriberEmail;
-        
-        const timestampField = document.createElement('input');
-        timestampField.type = 'hidden';
-        timestampField.name = 'timestamp';
-        timestampField.value = timestamp;
-        
-        hiddenForm.appendChild(nameField);
-        hiddenForm.appendChild(emailField);
-        hiddenForm.appendChild(timestampField);
-        document.body.appendChild(hiddenForm);
-        
-        fetch('/', {
-            method: 'POST',
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams(new FormData(hiddenForm)).toString()
-        }).catch(() => {});
-        
-        document.body.removeChild(hiddenForm);
-    } catch(e) {}
+        console.log('Subscriber saved to dashboard:', email);
+    }
 }
 
 // Initialize popup
@@ -901,12 +874,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 </script>
-
-<!-- Hidden form for owner notifications -->
-<form name="owner-notification" netlify netlify-honeypot="bot-field" hidden>
-    <input type="text" name="subscriber-email" />
-    <input type="text" name="timestamp" />
-</form>
 
 </body>
 </html>
