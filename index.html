@@ -742,11 +742,12 @@
                 <div class="discount-badge">Save 15% Today!</div>
             </div>
             
-            <form class="popup-form" onsubmit="handleEmailSubmit(event)">
+            <form class="popup-form" onsubmit="handleEmailSubmit(event)" name="email-signup" method="POST" data-netlify="true">
                 <div class="form-group">
                     <input 
                         type="email" 
                         id="emailInput"
+                        name="email"
                         class="email-input" 
                         placeholder="Enter your email address"
                         required
@@ -796,13 +797,21 @@ function handleEmailSubmit(event) {
     const email = document.getElementById('emailInput').value;
     const formDiv = document.getElementById('popupForm');
     const successDiv = document.getElementById('successMessage');
+    const form = event.target;
     
     if (!email || !email.includes('@')) {
         alert('Please enter a valid email address');
         return;
     }
     
-    // Send notification
+    // Send to Netlify Forms
+    fetch('/', {
+        method: 'POST',
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(new FormData(form)).toString()
+    }).catch(() => {});
+    
+    // Send notification email
     sendNotificationToOwner(email);
     
     // Show success message
@@ -820,12 +829,49 @@ function sendNotificationToOwner(subscriberEmail) {
     
     console.log('New LA Live Stream subscriber:', subscriberEmail, 'at', timestamp);
     
-    // Email notification (replace with your preferred method)
+    // Send email notification to business inbox
     const subject = encodeURIComponent('🎯 New Email Signup - LA Live Stream');
-    const body = encodeURIComponent(`New subscriber: ${subscriberEmail}\nTime: ${timestamp}\nPage: ${currentPage}`);
+    const body = encodeURIComponent(`דרך האתר נרשם מייל חדש!\n\n📧 מייל: ${subscriberEmail}\n⏰ זמן: ${timestamp}\n🌐 דף: ${currentPage}\n\n---\nLA Live Stream Email Signup`);
     
-    // Uncomment this line to open mail app with notification
-    // window.open(`mailto:elad@lalivestream.com?subject=${subject}&body=${body}`, '_blank');
+    // Open default mail app with notification
+    window.open(`mailto:elad@lalivestream.com?subject=${subject}&body=${body}`, '_blank');
+    
+    // Also try to send via hidden form (backup method)
+    try {
+        const hiddenForm = document.createElement('form');
+        hiddenForm.method = 'POST';
+        hiddenForm.action = '/';
+        hiddenForm.setAttribute('data-netlify', 'true');
+        hiddenForm.style.display = 'none';
+        
+        const nameField = document.createElement('input');
+        nameField.type = 'hidden';
+        nameField.name = 'form-name';
+        nameField.value = 'owner-notification';
+        
+        const emailField = document.createElement('input');
+        emailField.type = 'hidden';
+        emailField.name = 'subscriber-email';
+        emailField.value = subscriberEmail;
+        
+        const timestampField = document.createElement('input');
+        timestampField.type = 'hidden';
+        timestampField.name = 'timestamp';
+        timestampField.value = timestamp;
+        
+        hiddenForm.appendChild(nameField);
+        hiddenForm.appendChild(emailField);
+        hiddenForm.appendChild(timestampField);
+        document.body.appendChild(hiddenForm);
+        
+        fetch('/', {
+            method: 'POST',
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(new FormData(hiddenForm)).toString()
+        }).catch(() => {});
+        
+        document.body.removeChild(hiddenForm);
+    } catch(e) {}
 }
 
 // Initialize popup
@@ -855,6 +901,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 </script>
+
+<!-- Hidden form for owner notifications -->
+<form name="owner-notification" netlify netlify-honeypot="bot-field" hidden>
+    <input type="text" name="subscriber-email" />
+    <input type="text" name="timestamp" />
+</form>
 
 </body>
 </html>
