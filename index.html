@@ -824,6 +824,29 @@ function handleEmailSubmit(event) {
     formDiv.style.display = 'none';
     successDiv.classList.add('show');
     
+    // Try to sync with dashboard using multiple methods
+    try {
+        // Method 1: sessionStorage (shared across tabs)
+        sessionStorage.setItem('laLiveStreamSubscribers', localStorage.getItem('laLiveStreamSubscribers'));
+        
+        // Method 2: postMessage to other windows
+        if (window.opener) {
+            window.opener.postMessage({type: 'newSubscriber', email: email}, '*');
+        }
+        
+        // Method 3: Create a small notification
+        const notification = document.createElement('div');
+        notification.innerHTML = `<a href="admin.html?newEmail=${encodeURIComponent(email)}" target="_blank" style="color:#00ff88;">View in Dashboard</a>`;
+        notification.style.cssText = 'position:fixed;top:10px;right:10px;background:#111;padding:10px;border:1px solid #00ff88;border-radius:4px;z-index:10001;';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) notification.parentNode.removeChild(notification);
+        }, 10000);
+    } catch (e) {
+        console.error('Sync error:', e);
+    }
+    
     setTimeout(() => {
         closeEmailPopup();
     }, 4000);
