@@ -256,6 +256,7 @@
         <div class="controls">
             <input type="text" class="search-box" id="searchBox" placeholder="Search by email...">
             <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="addEmailManually()">Add Email</button>
                 <button class="btn" onclick="exportToCSV()">Export CSV</button>
                 <button class="btn btn-outline" onclick="testData()">Test Data</button>
                 <button class="btn btn-outline" onclick="clearAll()">Clear All</button>
@@ -491,6 +492,30 @@
                 btn.style.background = '';
                 btn.style.color = '';
             }, 1000);
+        }
+
+        function addEmailManually() {
+            const email = prompt('Enter email address:');
+            if (email && email.includes('@')) {
+                const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
+                
+                // Check if email already exists
+                if (!subscribers.find(s => s.email === email)) {
+                    subscribers.unshift({
+                        email: email,
+                        timestamp: new Date().toLocaleString(),
+                        source: 'Manual',
+                        id: Date.now()
+                    });
+                    localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+                    loadSubscribers();
+                    alert('Email added successfully!');
+                } else {
+                    alert('Email already exists!');
+                }
+            } else {
+                alert('Please enter a valid email address');
+            }
         }
 
         function testData() {
