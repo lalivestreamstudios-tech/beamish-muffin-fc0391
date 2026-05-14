@@ -916,7 +916,9 @@ async function sendAdminNotification(email) {
         subscriber_email: email,
         signup_time: new Date().toLocaleString(),
         page_url: window.location.href,
-        website_url: window.location.host
+        website_url: window.location.host,
+        name: 'Elad',
+        message: `New subscriber: ${email} signed up at ${new Date().toLocaleString()}`
     };
     
     console.log('Sending admin notification with params:', templateParams);
