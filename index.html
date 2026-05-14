@@ -830,21 +830,35 @@ function handleEmailSubmit(event) {
 }
 
 function saveToAdminDashboard(email) {
-    const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
+    console.log('SAVING TO DASHBOARD:', email);
     
-    // Check if email already exists
-    if (!subscribers.find(s => s.email === email)) {
-        const newSubscriber = {
-            email: email,
-            timestamp: new Date().toLocaleString(),
-            source: 'Popup',
-            id: Date.now()
-        };
+    try {
+        const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
+        console.log('Current subscribers:', subscribers.length);
         
-        subscribers.unshift(newSubscriber); // Add to beginning
-        localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
-        
-        console.log('Subscriber saved to dashboard:', email);
+        // Check if email already exists
+        if (!subscribers.find(s => s.email === email)) {
+            const newSubscriber = {
+                email: email,
+                timestamp: new Date().toLocaleString(),
+                source: 'Popup',
+                id: Date.now()
+            };
+            
+            subscribers.unshift(newSubscriber); // Add to beginning
+            localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+            
+            console.log('SUCCESS: Subscriber saved:', email);
+            console.log('Total subscribers now:', subscribers.length);
+            
+            // Test if it was actually saved
+            const test = localStorage.getItem('laLiveStreamSubscribers');
+            console.log('Verification - saved data:', test);
+        } else {
+            console.log('EMAIL ALREADY EXISTS:', email);
+        }
+    } catch (error) {
+        console.error('ERROR saving subscriber:', error);
     }
 }
 
