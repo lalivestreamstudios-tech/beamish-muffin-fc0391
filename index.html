@@ -6,6 +6,7 @@
  <title>LA Live Stream | Professional AV Production & Live Streaming Los Angeles</title>
  <meta name="description" content="Professional live streaming, AV production, LED screens, and virtual event services in Los Angeles since 2010. Contact us for a free consultation.">
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+ <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
  <link rel="canonical" href="https://www.lalivestream.com/">
  <meta name="robots" content="index, follow">
  <meta property="og:title" content="LA Live Stream | Professional AV Production & Live Streaming Los Angeles">
@@ -461,13 +462,34 @@
     cursor: pointer;
     transition: all 0.3s;
     font-family: inherit;
+    position: relative;
+    overflow: hidden;
 }
 
-.submit-btn:hover {
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.submit-btn:hover:not(:disabled) {
     background: transparent;
     color: #00ff88;
     box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
     transform: translateY(-2px);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .popup-footer {
@@ -742,24 +764,23 @@
                 <div class="discount-badge">Save 15% Today!</div>
             </div>
             
-            <form class="popup-form" onsubmit="handleEmailSubmit(event)" name="email-signup" method="POST" data-netlify="true">
+            <form class="popup-form" onsubmit="handleEmailSubmit(event)">
                 <div class="form-group">
                     <input 
                         type="email" 
                         id="emailInput"
-                        name="email"
                         class="email-input" 
                         placeholder="Enter your email address"
                         required
                     >
                 </div>
                 
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn" id="submitBtn">
                     Get Your Discount Now
                 </button>
                 
                 <div class="popup-footer">
-                    <small>We respect your privacy. <a href="#privacy">Privacy Policy</a></small>
+                    <small>We respect your privacy. You'll receive a welcome email with your discount code!</small>
                 </div>
             </form>
         </div>
@@ -767,18 +788,30 @@
         <div id="successMessage" class="success-message">
             <div class="success-emoji">✅</div>
             <h3 class="success-title">Welcome Aboard!</h3>
-            <p class="success-text">Check your email for your exclusive 15% discount code.<br>We'll be in touch with premium offers soon!</p>
+            <p class="success-text">Check your email for your exclusive 15% discount code!<br>We've sent you a welcome message with all the details.</p>
         </div>
     </div>
 </div>
 
-<!-- Hidden form for Netlify -->
-<form name="email-signup" netlify netlify-honeypot="bot-field" hidden>
-    <input type="text" name="email" />
-</form>
-
 <script>
 let emailPopupShown = false;
+
+// ================================
+// EmailJS Configuration
+// ================================
+// REPLACE THESE 4 VALUES WITH YOUR ACTUAL EmailJS SETTINGS:
+
+const EMAILJS_CONFIG = {
+    publicKey: "Lxc1lC1A543dsCDaJ",        // From EmailJS Account → API Keys
+    serviceId: "service_as0iisg",        // From EmailJS Email Services (e.g., service_abc123)
+    customerTemplate: "customer_welcome",     // Template name you created for customers
+    adminTemplate: "admin_notification"      // Template name you created for admin notifications
+};
+
+// Initialize EmailJS
+(function(){
+    emailjs.init(EMAILJS_CONFIG.publicKey);
+})();
 
 function showEmailPopup() {
     if (!emailPopupShown) {
@@ -796,99 +829,129 @@ function closeEmailPopup() {
     document.body.style.overflow = 'auto';
 }
 
-function handleEmailSubmit(event) {
+async function handleEmailSubmit(event) {
     event.preventDefault();
     
     const email = document.getElementById('emailInput').value;
+    const submitBtn = document.getElementById('submitBtn');
     const formDiv = document.getElementById('popupForm');
     const successDiv = document.getElementById('successMessage');
-    const form = event.target;
     
     if (!email || !email.includes('@')) {
         alert('Please enter a valid email address');
         return;
     }
     
-    // Save to admin dashboard
-    lastSubscriberEmail = email;
-    saveToAdminDashboard(email);
-    
-    // Send to Netlify Forms
-    fetch('/', {
-        method: 'POST',
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(new FormData(form)).toString()
-    }).catch(() => {});
-    
-    // Show success message
-    alert('Thank you for signing up! You will receive special offers soon.');
-    formDiv.style.display = 'none';
-    successDiv.classList.add('show');
-    
-    // Try to sync with dashboard using multiple methods
-    try {
-        // Method 1: sessionStorage (shared across tabs)
-        sessionStorage.setItem('laLiveStreamSubscribers', localStorage.getItem('laLiveStreamSubscribers'));
-        
-        // Method 2: postMessage to other windows
-        if (window.opener) {
-            window.opener.postMessage({type: 'newSubscriber', email: email}, '*');
-        }
-        
-        // Method 3: Create a small notification
-        const notification = document.createElement('div');
-        notification.innerHTML = `<a href="admin.html?newEmail=${encodeURIComponent(email)}" target="_blank" style="color:#00ff88;">View in Dashboard</a>`;
-        notification.style.cssText = 'position:fixed;top:10px;right:10px;background:#111;padding:10px;border:1px solid #00ff88;border-radius:4px;z-index:10001;';
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            if (notification.parentNode) notification.parentNode.removeChild(notification);
-        }, 10000);
-    } catch (e) {
-        console.error('Sync error:', e);
-    }
-    
-    setTimeout(() => {
-        closeEmailPopup();
-    }, 4000);
-}
-
-function saveToAdminDashboard(email) {
-    console.log('SAVING TO DASHBOARD:', email);
+    // Show loading state
+    submitBtn.innerHTML = '<span class="loading-spinner"></span> Sending emails...';
+    submitBtn.disabled = true;
     
     try {
-        const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
-        console.log('Current subscribers:', subscribers.length);
+        console.log('Processing signup for:', email);
         
-        // Always add - allow duplicate emails from different times/sources
-        const newSubscriber = {
-            email: email,
-            timestamp: new Date().toLocaleString(),
-            source: 'Popup',
-            id: Date.now() + Math.random() // Unique ID
-        };
+        // Save to dashboard first
+        await saveToAdminDashboard(email);
         
-        subscribers.unshift(newSubscriber); // Add to beginning
-        localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+        // Send emails
+        console.log('Sending welcome email...');
+        await sendCustomerWelcomeEmail(email);
         
-        console.log('SUCCESS: Subscriber saved:', email);
-        console.log('Total subscribers now:', subscribers.length);
+        console.log('Sending admin notification...');
+        await sendAdminNotification(email);
         
-        // Create admin-friendly format
-        console.log('=== ADMIN INFO ===');
-        console.log(`New subscriber: ${email}`);
-        console.log(`Time: ${newSubscriber.timestamp}`);
-        console.log(`Source: Different device/session`);
-        console.log(`Copy this for manual entry: ${email}`);
-        console.log('==================');
+        // Show success message
+        formDiv.style.display = 'none';
+        successDiv.classList.add('show');
         
-        // Test if it was actually saved
-        const test = localStorage.getItem('laLiveStreamSubscribers');
-        console.log('Verification - saved data:', test);
+        console.log('Signup process completed successfully');
         
     } catch (error) {
-        console.error('ERROR saving subscriber:', error);
+        console.error('Signup error:', error);
+        
+        // Still show success to user (don't show technical errors)
+        formDiv.style.display = 'none';
+        successDiv.classList.add('show');
     }
+    
+    // Close popup after 5 seconds
+    setTimeout(() => {
+        closeEmailPopup();
+    }, 5000);
+}
+
+async function sendCustomerWelcomeEmail(email) {
+    if (typeof emailjs === 'undefined') {
+        throw new Error('EmailJS not loaded');
+    }
+    
+    const templateParams = {
+        to_email: email,
+        customer_name: email.split('@')[0], // Use email prefix as name
+        customer_email: email,
+        discount_code: 'LALIVE15',
+        company_name: 'LA Live Stream',
+        admin_email: 'elad@lalivestream.com',
+        website_url: 'www.lalivestream.com'
+    };
+    
+    const response = await emailjs.send(
+        EMAILJS_CONFIG.serviceId, 
+        EMAILJS_CONFIG.customerTemplate, 
+        templateParams
+    );
+    
+    console.log('Customer email sent:', response);
+    return response;
+}
+
+async function sendAdminNotification(email) {
+    if (typeof emailjs === 'undefined') {
+        throw new Error('EmailJS not loaded');
+    }
+    
+    const templateParams = {
+        to_email: 'elad@lalivestream.com',
+        subscriber_email: email,
+        signup_time: new Date().toLocaleString(),
+        page_url: window.location.href,
+        website_url: window.location.host
+    };
+    
+    const response = await emailjs.send(
+        EMAILJS_CONFIG.serviceId, 
+        EMAILJS_CONFIG.adminTemplate, 
+        templateParams
+    );
+    
+    console.log('Admin notification sent:', response);
+    return response;
+}
+
+async function saveToAdminDashboard(email) {
+    console.log('SAVING TO DASHBOARD:', email);
+    
+    const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
+    console.log('Current subscribers:', subscribers.length);
+    
+    // Create new subscriber entry
+    const newSubscriber = {
+        email: email,
+        timestamp: new Date().toLocaleString(),
+        source: 'Email Popup with Auto-Email',
+        status: 'confirmed',
+        id: Date.now() + Math.random()
+    };
+    
+    subscribers.unshift(newSubscriber);
+    localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+    
+    // Also save to sessionStorage for cross-tab sync
+    sessionStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+    
+    console.log('SUCCESS: Subscriber saved:', email);
+    console.log('Total subscribers now:', subscribers.length);
+    
+    return newSubscriber;
 }
 
 // Initialize popup
@@ -918,18 +981,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Global variable to store last email
-let lastSubscriberEmail = '';
-
-function openDashboard() {
-    if (lastSubscriberEmail) {
-        const encodedEmail = encodeURIComponent(lastSubscriberEmail);
-        const timestamp = encodeURIComponent(new Date().toLocaleString());
-        window.open(`login.html?email=${encodedEmail}&timestamp=${timestamp}`, '_blank');
-    } else {
-        window.open('login.html', '_blank');
-    }
-}
 </script>
 
 </body>
