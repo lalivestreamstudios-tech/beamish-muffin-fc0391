@@ -257,6 +257,7 @@
             <input type="text" class="search-box" id="searchBox" placeholder="Search by email...">
             <div style="display: flex; gap: 10px;">
                 <button class="btn" onclick="exportToCSV()">Export CSV</button>
+                <button class="btn btn-outline" onclick="testData()">Test Data</button>
                 <button class="btn btn-outline" onclick="clearAll()">Clear All</button>
                 <button class="btn btn-outline" onclick="refreshData()">Refresh</button>
                 <button class="btn btn-outline" onclick="logout()">Logout</button>
@@ -298,9 +299,22 @@
         });
 
         function loadSubscribers() {
+            console.log('Loading subscribers...');
             const stored = localStorage.getItem('laLiveStreamSubscribers');
+            console.log('Raw data from localStorage:', stored);
+            
             if (stored) {
-                subscribers = JSON.parse(stored);
+                try {
+                    subscribers = JSON.parse(stored);
+                    console.log('Parsed subscribers:', subscribers);
+                    console.log('Number of subscribers:', subscribers.length);
+                } catch (e) {
+                    console.error('Error parsing subscribers:', e);
+                    subscribers = [];
+                }
+            } else {
+                console.log('No data found in localStorage');
+                subscribers = [];
             }
             renderSubscribers();
             updateStats();
@@ -438,6 +452,24 @@
                 btn.style.background = '';
                 btn.style.color = '';
             }, 1000);
+        }
+
+        function testData() {
+            const stored = localStorage.getItem('laLiveStreamSubscribers');
+            alert('Raw data: ' + stored);
+            console.log('Full localStorage data:', stored);
+            
+            // Add test subscriber
+            const testEmail = 'test@example.com';
+            const subscribers = JSON.parse(stored || '[]');
+            subscribers.push({
+                email: testEmail,
+                timestamp: new Date().toLocaleString(),
+                source: 'Test',
+                id: Date.now()
+            });
+            localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+            loadSubscribers();
         }
 
         function logout() {
