@@ -810,6 +810,7 @@ function handleEmailSubmit(event) {
     }
     
     // Save to admin dashboard
+    lastSubscriberEmail = email;
     saveToAdminDashboard(email);
     
     // Send to Netlify Forms
@@ -874,6 +875,13 @@ function saveToAdminDashboard(email) {
             console.log('SUCCESS: Subscriber saved:', email);
             console.log('Total subscribers now:', subscribers.length);
             
+            // Create admin-friendly format
+            console.log('=== ADMIN INFO ===');
+            console.log(`New subscriber: ${email}`);
+            console.log(`Time: ${newSubscriber.timestamp}`);
+            console.log(`Copy this for manual entry: ${email}`);
+            console.log('==================');
+            
             // Test if it was actually saved
             const test = localStorage.getItem('laLiveStreamSubscribers');
             console.log('Verification - saved data:', test);
@@ -911,6 +919,19 @@ document.addEventListener('keydown', (e) => {
         closeEmailPopup();
     }
 });
+
+// Global variable to store last email
+let lastSubscriberEmail = '';
+
+function openDashboard() {
+    if (lastSubscriberEmail) {
+        const encodedEmail = encodeURIComponent(lastSubscriberEmail);
+        const timestamp = encodeURIComponent(new Date().toLocaleString());
+        window.open(`login.html?email=${encodedEmail}&timestamp=${timestamp}`, '_blank');
+    } else {
+        window.open('login.html', '_blank');
+    }
+}
 </script>
 
 </body>
