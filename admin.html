@@ -300,8 +300,18 @@
 
         function loadSubscribers() {
             console.log('Loading subscribers...');
-            const stored = localStorage.getItem('laLiveStreamSubscribers');
-            console.log('Raw data from localStorage:', stored);
+            
+            // Try multiple storage keys and locations
+            let stored = localStorage.getItem('laLiveStreamSubscribers') || 
+                        sessionStorage.getItem('laLiveStreamSubscribers') ||
+                        localStorage.getItem('subscribers') ||
+                        null;
+                        
+            console.log('Raw data from storage:', stored);
+            
+            // Check URL parameters for new email
+            const urlParams = new URLSearchParams(window.location.search);
+            const newEmail = urlParams.get('newEmail');
             
             if (stored) {
                 try {
@@ -313,9 +323,22 @@
                     subscribers = [];
                 }
             } else {
-                console.log('No data found in localStorage');
+                console.log('No data found in any storage');
                 subscribers = [];
             }
+            
+            // Add new email from URL if exists
+            if (newEmail && !subscribers.find(s => s.email === newEmail)) {
+                subscribers.unshift({
+                    email: newEmail,
+                    timestamp: new Date().toLocaleString(),
+                    source: 'Recent',
+                    id: Date.now()
+                });
+                // Save it back
+                localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+            }
+            
             renderSubscribers();
             updateStats();
         }
@@ -328,7 +351,12 @@
             const list = filteredList || subscribers;
             const container = document.getElementById('subscribersList');
             
+            console.log('RENDERING:', list.length, 'subscribers');
+            console.log('Container found:', !!container);
+            console.log('List data:', list);
+            
             if (list.length === 0) {
+                console.log('No subscribers - showing empty state');
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>No subscribers found</h3>
@@ -338,7 +366,8 @@
                 return;
             }
 
-            container.innerHTML = list.map((subscriber, index) => `
+            console.log('Rendering', list.length, 'subscribers');
+            const html = list.map((subscriber, index) => `
                 <div class="table-row">
                     <div class="email">${subscriber.email}</div>
                     <div class="timestamp">${subscriber.timestamp}</div>
@@ -349,9 +378,15 @@
                     </div>
                 </div>
             `).join('');
+            
+            console.log('Generated HTML:', html);
+            container.innerHTML = html;
+            console.log('HTML set to container');
         }
 
         function updateStats() {
+            console.log('UPDATING STATS for', subscribers.length, 'subscribers');
+            
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -361,10 +396,14 @@
             const weekCount = subscribers.filter(s => new Date(s.timestamp) >= weekAgo).length;
             const monthCount = subscribers.filter(s => new Date(s.timestamp) >= monthAgo).length;
 
+            console.log('Stats:', {total: subscribers.length, today: todayCount, week: weekCount, month: monthCount});
+
             document.getElementById('totalSubscribers').textContent = subscribers.length;
             document.getElementById('todaySubscribers').textContent = todayCount;
             document.getElementById('weekSubscribers').textContent = weekCount;
             document.getElementById('monthSubscribers').textContent = monthCount;
+            
+            console.log('Stats updated on page');
         }
 
         function setupSearch() {
