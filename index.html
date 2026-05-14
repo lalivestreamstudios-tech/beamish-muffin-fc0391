@@ -860,34 +860,32 @@ function saveToAdminDashboard(email) {
         const subscribers = JSON.parse(localStorage.getItem('laLiveStreamSubscribers') || '[]');
         console.log('Current subscribers:', subscribers.length);
         
-        // Check if email already exists
-        if (!subscribers.find(s => s.email === email)) {
-            const newSubscriber = {
-                email: email,
-                timestamp: new Date().toLocaleString(),
-                source: 'Popup',
-                id: Date.now()
-            };
-            
-            subscribers.unshift(newSubscriber); // Add to beginning
-            localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
-            
-            console.log('SUCCESS: Subscriber saved:', email);
-            console.log('Total subscribers now:', subscribers.length);
-            
-            // Create admin-friendly format
-            console.log('=== ADMIN INFO ===');
-            console.log(`New subscriber: ${email}`);
-            console.log(`Time: ${newSubscriber.timestamp}`);
-            console.log(`Copy this for manual entry: ${email}`);
-            console.log('==================');
-            
-            // Test if it was actually saved
-            const test = localStorage.getItem('laLiveStreamSubscribers');
-            console.log('Verification - saved data:', test);
-        } else {
-            console.log('EMAIL ALREADY EXISTS:', email);
-        }
+        // Always add - allow duplicate emails from different times/sources
+        const newSubscriber = {
+            email: email,
+            timestamp: new Date().toLocaleString(),
+            source: 'Popup',
+            id: Date.now() + Math.random() // Unique ID
+        };
+        
+        subscribers.unshift(newSubscriber); // Add to beginning
+        localStorage.setItem('laLiveStreamSubscribers', JSON.stringify(subscribers));
+        
+        console.log('SUCCESS: Subscriber saved:', email);
+        console.log('Total subscribers now:', subscribers.length);
+        
+        // Create admin-friendly format
+        console.log('=== ADMIN INFO ===');
+        console.log(`New subscriber: ${email}`);
+        console.log(`Time: ${newSubscriber.timestamp}`);
+        console.log(`Source: Different device/session`);
+        console.log(`Copy this for manual entry: ${email}`);
+        console.log('==================');
+        
+        // Test if it was actually saved
+        const test = localStorage.getItem('laLiveStreamSubscribers');
+        console.log('Verification - saved data:', test);
+        
     } catch (error) {
         console.error('ERROR saving subscriber:', error);
     }
