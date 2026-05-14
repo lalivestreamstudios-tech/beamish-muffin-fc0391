@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - LA Live Stream</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0a2e1a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .login-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo img {
+            width: 120px;
+            margin-bottom: 15px;
+        }
+
+        .logo h2 {
+            color: #00ff88;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo p {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00ff88;
+            background: #111;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            background: #00cc6a;
+            transform: translateY(-1px);
+        }
+
+        .error-msg {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #ff6666;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .note {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <img src="https://static.wixstatic.com/media/fc1237_f1c4359e187b48928156b677155d518a~mv2.png" alt="LA Live Stream">
+            <h2>Admin Access</h2>
+            <p>Subscribers Dashboard</p>
+        </div>
+
+        <form onsubmit="handleLogin(event)">
+            <div class="error-msg" id="errorMsg">
+                Invalid password. Please try again.
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+
+            <button type="submit" class="login-btn">Access Dashboard</button>
+        </form>
+
+        <div class="note">
+            Authorized access only<br>
+            LA Live Stream Admin Panel
+        </div>
+    </div>
+
+    <script>
+        // Simple password protection
+        const ADMIN_PASSWORD = 'lalive2024'; // Change this to your preferred password
+        
+        // Check if already logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            window.location.href = 'admin.html';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (password === ADMIN_PASSWORD) {
+                // Set login status
+                localStorage.setItem('adminLoggedIn', 'true');
+                
+                // Redirect to dashboard
+                window.location.href = 'admin.html';
+            } else {
+                // Show error
+                errorMsg.style.display = 'block';
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+                
+                // Hide error after 3 seconds
+                setTimeout(() => {
+                    errorMsg.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Auto-focus password field
+        document.getElementById('password').focus();
+    </script>
+</body>
+</html>
